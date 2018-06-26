@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/uw-labs/straw"
+	"github.com/utilitywarehouse/straw"
 )
 
 func seqToPath(basepath string, seq int) string {

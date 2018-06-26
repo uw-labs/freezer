@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uw-labs/straw"
+	"github.com/utilitywarehouse/straw"
 )
 
 func TestSinkCreatesNewDir(t *testing.T) {

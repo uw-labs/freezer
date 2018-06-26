@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/uw-labs/straw"
+	"github.com/utilitywarehouse/straw"
 )
 
 func main() {
