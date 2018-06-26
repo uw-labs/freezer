@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/uw-labs/straw"
+	"github.com/utilitywarehouse/straw"
 )
 
 type ConsumerMessageHandler func([]byte) error

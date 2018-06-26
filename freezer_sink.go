@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/uw-labs/straw"
+	"github.com/utilitywarehouse/straw"
 )
 
 type messageSink struct {

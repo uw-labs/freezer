@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/uw-labs/straw"
+	"github.com/utilitywarehouse/straw"
 )
 
 func TestSeqToPath(t *testing.T) {
