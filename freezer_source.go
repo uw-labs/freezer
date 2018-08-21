@@ -77,7 +77,7 @@ func (mq *messageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 		for {
 			lenBytes := []byte{0, 0, 0, 0}
 			_, err := rc.Read(lenBytes[:])
-			if err != io.EOF && err != nil {
+			if err != nil && err != io.EOF {
 				return err
 			}
 
