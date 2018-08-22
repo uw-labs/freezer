@@ -113,12 +113,12 @@ func (mq *messageSink) loop(nextSeq int) error {
 					return err
 				}
 			}
-			if _, err := wc.Write(lenBytes[:]); err != nil {
+
+			msg := append(lenBytes[:], r.m...)
+			if _, err := wc.Write(msg); err != nil {
 				return err
 			}
-			if _, err := wc.Write(r.m); err != nil {
-				return err
-			}
+
 			close(r.writtenOk)
 			writtenCount++
 			if writtenCount == mq.maxUnflushedMessages {
