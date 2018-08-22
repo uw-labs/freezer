@@ -76,9 +76,11 @@ func (mq *messageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 	readLoop:
 		for {
 			lenBytes := []byte{0, 0, 0, 0}
-			if _, err := rc.Read(lenBytes[:]); err != nil {
+			_, err := rc.Read(lenBytes[:])
+			if err != nil && err != io.EOF {
 				return err
 			}
+
 			len := int(binary.LittleEndian.Uint32(lenBytes[:]))
 			if len == 0 {
 				// next read should be EOF

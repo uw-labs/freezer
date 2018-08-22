@@ -2,6 +2,7 @@ package freezer
 
 import (
 	"context"
+	"io"
 	"testing"
 	"time"
 
@@ -189,5 +190,57 @@ func TestSourceContextCancelDuringRead(t *testing.T) {
 	if err := <-consumeErr; err != nil {
 		t.Error(err)
 	}
+
+}
+
+type mockStrawStore struct {
+	*straw.MemStreamStore
+}
+
+func newMockStrawStore() *mockStrawStore {
+	s := straw.NewMemStreamStore()
+	return &mockStrawStore{s}
+}
+
+func (fs *mockStrawStore) OpenReadCloser(name string) (straw.StrawReader, error) {
+
+	r, err := fs.MemStreamStore.OpenReadCloser(name)
+	mock := &readerMock{r}
+	return mock, err
+}
+
+type readerMock struct {
+	straw.StrawReader
+}
+
+func (m *readerMock) Read(p []byte) (n int, err error) {
+	l, _ := m.StrawReader.Read(p)
+	return l, io.EOF
+}
+
+func TestSourceEOF(t *testing.T) {
+	assert := assert.New(t)
+	ss := newMockStrawStore()
+
+	sink, err := NewMessageSink(ss, MessageSinkConfig{Path: "/foo/bar/baz"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.NoError(sink.PutMessage([]byte{1, 2, 3}))
+	assert.NoError(sink.Close())
+
+	source := NewMessageSource(ss, MessageSourceConfig{Path: "/foo/bar/baz"})
+	ctx, cancel := context.WithCancel(context.Background())
+	err = source.ConsumeMessages(ctx, func(m []byte) error {
+		cancel()
+		return nil
+	})
+	assert.Condition(func() bool {
+		if err == io.EOF {
+			return false
+		}
+		return true
+	})
 
 }
