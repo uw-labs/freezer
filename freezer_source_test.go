@@ -33,17 +33,17 @@ func TestConsumeMessagesCorruptDataTest(t *testing.T) {
 		{
 			"Incorrect length",
 			append(append(length(len(payload)+1), payload...), delim...),
-			"Could no read length (unexpected EOF)",
+			"Could not read length (unexpected EOF)",
 		},
 		{
 			"Incomplete length",
 			[]byte{0, 0},
-			"Could no read length (unexpected EOF)",
+			"Could not read length (unexpected EOF)",
 		},
 		{
 			"Incomplete payload",
 			append(length(len(payload)), []byte("short")...),
-			"Could no read payload (unexpected EOF)",
+			"Could not read payload (unexpected EOF)",
 		},
 	}
 	for _, test := range tests {

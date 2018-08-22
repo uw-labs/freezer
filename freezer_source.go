@@ -68,7 +68,7 @@ func (mq *messageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 			lenBytes := []byte{0, 0, 0, 0}
 			_, err := io.ReadFull(rc, lenBytes[:])
 			if err != nil {
-				return fmt.Errorf("Could no read length (%v)", err)
+				return fmt.Errorf("Could not read length (%v)", err)
 			}
 
 			len := int(binary.LittleEndian.Uint32(lenBytes[:]))
@@ -82,7 +82,7 @@ func (mq *messageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 			}
 			buf := make([]byte, len)
 			if _, err := io.ReadFull(rc, buf); err != nil {
-				return fmt.Errorf("Could no read payload (%v)", err)
+				return fmt.Errorf("Could not read payload (%v)", err)
 			}
 			if err := handler(buf); err != nil {
 				return err
