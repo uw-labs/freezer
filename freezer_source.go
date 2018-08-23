@@ -37,16 +37,6 @@ func NewMessageSource(streamstore straw.StreamStore, config MessageSourceConfig)
 }
 
 func (mq *messageSource) ConsumeMessages(ctx context.Context, handler ConsumerMessageHandler) error {
-	/*
-		fi, err := mq.streamstore.Stat(mq.path)
-		if err != nil {
-			return err
-		}
-		if !fi.IsDir() {
-			return fmt.Errorf("%v is not a directory", fi.Name())
-		}
-	*/
-
 	for seq := 0; ; seq++ {
 		fullname := seqToPath(mq.path, seq)
 
@@ -76,9 +66,9 @@ func (mq *messageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 	readLoop:
 		for {
 			lenBytes := []byte{0, 0, 0, 0}
-			_, err := rc.Read(lenBytes[:])
-			if err != nil && err != io.EOF {
-				return err
+			_, err := io.ReadFull(rc, lenBytes[:])
+			if err != nil {
+				return fmt.Errorf("Could not read length (%v)", err)
 			}
 
 			len := int(binary.LittleEndian.Uint32(lenBytes[:]))
@@ -92,7 +82,7 @@ func (mq *messageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 			}
 			buf := make([]byte, len)
 			if _, err := io.ReadFull(rc, buf); err != nil {
-				return err
+				return fmt.Errorf("Could not read payload (%v)", err)
 			}
 			if err := handler(buf); err != nil {
 				return err
