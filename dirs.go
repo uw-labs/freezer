@@ -19,6 +19,9 @@ func seqToPath(basepath string, seq int) string {
 	return path
 }
 
+// This is the depth of parent directories within which the data is stored.
+const dirDepth = 6
+
 func nextSequence(ss straw.StreamStore, basedir string) (int, error) {
 	_, err := ss.Stat(seqToPath(basedir, 0))
 	if err != nil {
@@ -30,14 +33,14 @@ func nextSequence(ss straw.StreamStore, basedir string) (int, error) {
 
 	dir := basedir
 	total := 0
-	for i := 0; i < 7; i++ {
+	for i := 0; i <= dirDepth; i++ {
 		fis, err := ss.Readdir(dir)
 		if err != nil {
 			return -1, err
 		}
 		fi := fis[len(fis)-1]
-		if i < 6 && !fi.IsDir() {
-			return -1, err
+		if i < dirDepth && !fi.IsDir() {
+			return -1, fmt.Errorf("'%s' is not a directory", fi.Name())
 		}
 		dir = filepath.Join(dir, fi.Name())
 		num, err := strconv.Atoi(fi.Name())

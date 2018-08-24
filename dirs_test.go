@@ -26,6 +26,25 @@ func TestFindLatestEmpty(t *testing.T) {
 
 }
 
+func TestNotADir(t *testing.T) {
+	assert := assert.New(t)
+
+	ss := straw.NewMemStreamStore()
+
+	err := straw.MkdirAll(ss, seqToPath("/foo/", 0), 0777)
+	assert.NoError(err)
+
+	wc, err := ss.CreateWriteCloser("/foo/00/bar")
+	_, err = wc.Write([]byte{1})
+	assert.NoError(err)
+
+	assert.NoError(wc.Close())
+
+	seq2, err := nextSequence(ss, "/foo/")
+	assert.EqualError(err, "'bar' is not a directory")
+	assert.Equal(-1, seq2)
+}
+
 func TestFindLatest(t *testing.T) {
 	assert := assert.New(t)
 
