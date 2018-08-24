@@ -37,7 +37,7 @@ func nextSequence(ss straw.StreamStore, basedir string) (int, error) {
 		}
 		fi := fis[len(fis)-1]
 		if i < 6 && !fi.IsDir() {
-			return -1, err
+			return -1, fmt.Errorf("'%s' is not a directory", fi.Name())
 		}
 		dir = filepath.Join(dir, fi.Name())
 		num, err := strconv.Atoi(fi.Name())
