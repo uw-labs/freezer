@@ -20,11 +20,19 @@ type messageSource struct {
 }
 
 type MessageSourceConfig struct {
-	Path       string
-	PollPeriod time.Duration
+	Path            string
+	PollPeriod      time.Duration
+	CompressionType CompressionType
 }
 
 func NewMessageSource(streamstore straw.StreamStore, config MessageSourceConfig) *messageSource {
+
+	switch config.CompressionType {
+	case CompressionTypeNone:
+	case CompressionTypeSnappy:
+		streamstore = newSnappyStreamStore(streamstore)
+	}
+
 	ms := &messageSource{
 		streamstore: streamstore,
 		path:        config.Path,

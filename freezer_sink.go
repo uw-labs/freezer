@@ -29,6 +29,7 @@ type MessageSinkConfig struct {
 	Path                 string
 	MaxUnflushedTime     time.Duration
 	MaxUnflushedMessages int
+	CompressionType      CompressionType
 }
 
 const (
@@ -50,6 +51,12 @@ func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*m
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	switch config.CompressionType {
+	case CompressionTypeNone:
+	case CompressionTypeSnappy:
+		streamstore = newSnappyStreamStore(streamstore)
 	}
 
 	ms := &messageSink{
