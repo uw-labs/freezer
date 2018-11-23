@@ -19,6 +19,7 @@ type MessageSink struct {
 
 	maxUnflushedTime     time.Duration
 	maxUnflushedMessages int
+	flushReqs            chan flushReq
 
 	exitErr  error
 	closeReq chan struct{}
@@ -66,6 +67,7 @@ func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*M
 
 		maxUnflushedTime:     config.MaxUnflushedTime,
 		maxUnflushedMessages: config.MaxUnflushedMessages,
+		flushReqs:            make(chan flushReq),
 
 		closeReq: make(chan struct{}),
 		closed:   make(chan struct{}),
@@ -144,17 +146,33 @@ func (mq *MessageSink) loop(nextSeq int) error {
 				return wc.Close()
 			}
 			return nil
+		case fr := <-mq.flushReqs:
+			if wc != nil {
+				if _, err := wc.Write([]byte{0, 0, 0, 0}); err != nil {
+					return err
+				}
+				if err := wc.Close(); err != nil {
+					return err
+				}
+				nextSeq++
+				wc = nil
+				writtenCount = 0
+				flushNeeded = false
+			}
+			close(fr.flushedOk)
 		}
 		if flushNeeded {
-			if _, err := wc.Write([]byte{0, 0, 0, 0}); err != nil {
-				return err
+			if wc != nil {
+				if _, err := wc.Write([]byte{0, 0, 0, 0}); err != nil {
+					return err
+				}
+				if err := wc.Close(); err != nil {
+					return err
+				}
+				nextSeq++
+				wc = nil
+				writtenCount = 0
 			}
-			if err := wc.Close(); err != nil {
-				return err
-			}
-			nextSeq++
-			wc = nil
-			writtenCount = 0
 			flushNeeded = false
 		}
 	}
@@ -171,6 +189,26 @@ func (mq *MessageSink) PutMessage(m []byte) error {
 	case mq.reqs <- req:
 		select {
 		case <-req.writtenOk:
+			return nil
+		case <-mq.closed:
+			return mq.exitErr
+		}
+	case <-mq.closed:
+		return mq.exitErr
+	}
+}
+
+type flushReq struct {
+	flushedOk chan struct{}
+}
+
+func (mq *MessageSink) Flush() error {
+	req := flushReq{make(chan struct{})}
+
+	select {
+	case mq.flushReqs <- req:
+		select {
+		case <-req.flushedOk:
 			return nil
 		case <-mq.closed:
 			return mq.exitErr
