@@ -51,6 +51,12 @@ func (mq *MessageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 		var rc io.ReadCloser
 		var err error
 
+		defer func() {
+			if rc != nil {
+				rc.Close()
+			}
+		}()
+
 	waitLoop:
 		for {
 			rc, err = mq.streamstore.OpenReadCloser(fullname)
@@ -95,6 +101,9 @@ func (mq *MessageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 			if err := handler(buf); err != nil {
 				return err
 			}
+		}
+		if err := rc.Close(); err != nil {
+			return err
 		}
 	}
 }
