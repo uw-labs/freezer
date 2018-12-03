@@ -78,8 +78,15 @@ func (mq *messageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 			if err != nil {
 				if err == io.EOF {
 					// file is likely still being written to, sleep and retry.
-					time.Sleep(mq.pollPeriod)
-					continue readLoop
+					select {
+					case <-ctx.Done():
+						if ctx.Err() == context.DeadlineExceeded || ctx.Err() == context.Canceled {
+							return nil
+						}
+						return ctx.Err()
+					case <-time.After(mq.pollPeriod):
+						continue readLoop
+					}
 				}
 				return fmt.Errorf("Could not read length (%v)", err)
 			}
