@@ -13,7 +13,7 @@ import (
 
 type ConsumerMessageHandler func([]byte) error
 
-type messageSource struct {
+type MessageSource struct {
 	streamstore straw.StreamStore
 	path        string
 	pollPeriod  time.Duration
@@ -25,7 +25,7 @@ type MessageSourceConfig struct {
 	CompressionType CompressionType
 }
 
-func NewMessageSource(streamstore straw.StreamStore, config MessageSourceConfig) *messageSource {
+func NewMessageSource(streamstore straw.StreamStore, config MessageSourceConfig) *MessageSource {
 
 	switch config.CompressionType {
 	case CompressionTypeNone:
@@ -33,7 +33,7 @@ func NewMessageSource(streamstore straw.StreamStore, config MessageSourceConfig)
 		streamstore = newSnappyStreamStore(streamstore)
 	}
 
-	ms := &messageSource{
+	ms := &MessageSource{
 		streamstore: streamstore,
 		path:        config.Path,
 		pollPeriod:  config.PollPeriod,
@@ -44,7 +44,7 @@ func NewMessageSource(streamstore straw.StreamStore, config MessageSourceConfig)
 	return ms
 }
 
-func (mq *messageSource) ConsumeMessages(ctx context.Context, handler ConsumerMessageHandler) error {
+func (mq *MessageSource) ConsumeMessages(ctx context.Context, handler ConsumerMessageHandler) error {
 	for seq := 0; ; seq++ {
 		fullname := seqToPath(mq.path, seq)
 

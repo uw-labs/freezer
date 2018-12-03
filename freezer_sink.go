@@ -11,7 +11,7 @@ import (
 	"github.com/uw-labs/straw"
 )
 
-type messageSink struct {
+type MessageSink struct {
 	streamstore straw.StreamStore
 	path        string
 
@@ -36,7 +36,7 @@ const (
 	DefaultMaxUnflushedTime = time.Second * 10
 )
 
-func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*messageSink, error) {
+func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*MessageSink, error) {
 
 	if config.MaxUnflushedTime == 0 {
 		config.MaxUnflushedTime = DefaultMaxUnflushedTime
@@ -59,7 +59,7 @@ func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*m
 		streamstore = newSnappyStreamStore(streamstore)
 	}
 
-	ms := &messageSink{
+	ms := &MessageSink{
 		streamstore: streamstore,
 		path:        config.Path,
 		reqs:        make(chan *messageReq),
@@ -85,12 +85,12 @@ func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*m
 	return ms, nil
 }
 
-func (mq *messageSink) run(nextSeq int) {
+func (mq *MessageSink) run(nextSeq int) {
 	mq.exitErr = mq.loop(nextSeq)
 	close(mq.closed)
 }
 
-func (mq *messageSink) loop(nextSeq int) error {
+func (mq *MessageSink) loop(nextSeq int) error {
 	writtenCount := 0
 	var t *time.Timer
 	var timerC <-chan time.Time
@@ -165,7 +165,7 @@ type messageReq struct {
 	writtenOk chan struct{}
 }
 
-func (mq *messageSink) PutMessage(m []byte) error {
+func (mq *MessageSink) PutMessage(m []byte) error {
 	req := &messageReq{m, make(chan struct{})}
 	select {
 	case mq.reqs <- req:
@@ -180,7 +180,7 @@ func (mq *messageSink) PutMessage(m []byte) error {
 	}
 }
 
-func (mq *messageSink) Close() error {
+func (mq *MessageSink) Close() error {
 	select {
 	case mq.closeReq <- struct{}{}:
 		<-mq.closed
