@@ -96,7 +96,7 @@ func (mq *MessageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 			}
 			buf := make([]byte, len)
 			if _, err := io.ReadFull(rc, buf); err != nil {
-				return fmt.Errorf("Could not read payload (%v)", err)
+				return fmt.Errorf("Could not read payload from %v. Expected len was %d. (%v)", fullname, len, err)
 			}
 			if err := handler(buf); err != nil {
 				return err
