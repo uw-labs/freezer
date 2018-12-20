@@ -43,7 +43,7 @@ func TestConsumeMessagesCorruptDataTest(t *testing.T) {
 		{
 			"Incomplete payload",
 			append(length(len(payload)), []byte("short")...),
-			"Could not read payload (unexpected EOF)",
+			"Could not read payload from /foo/bar/baz/00/00/00/00/00/00/00. Expected len was 7. (unexpected EOF)",
 		},
 	}
 	for _, test := range tests {
