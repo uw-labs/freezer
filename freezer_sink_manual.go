@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/uw-labs/straw"
 )
@@ -17,8 +16,7 @@ type MessageSink struct {
 
 	reqs chan *messageReq
 
-	maxUnflushedTime     time.Duration
-	maxUnflushedMessages int
+	flushReqs chan flushReq
 
 	exitErr  error
 	closeReq chan struct{}
@@ -26,21 +24,11 @@ type MessageSink struct {
 }
 
 type MessageSinkConfig struct {
-	Path                 string
-	MaxUnflushedTime     time.Duration
-	MaxUnflushedMessages int
-	CompressionType      CompressionType
+	Path            string
+	CompressionType CompressionType
 }
 
-const (
-	DefaultMaxUnflushedTime = time.Second * 10
-)
-
 func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*MessageSink, error) {
-
-	if config.MaxUnflushedTime == 0 {
-		config.MaxUnflushedTime = DefaultMaxUnflushedTime
-	}
 
 	_, err := streamstore.Stat(config.Path)
 	if os.IsNotExist(err) {
@@ -64,15 +52,10 @@ func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*M
 		path:        config.Path,
 		reqs:        make(chan *messageReq),
 
-		maxUnflushedTime:     config.MaxUnflushedTime,
-		maxUnflushedMessages: config.MaxUnflushedMessages,
+		flushReqs: make(chan flushReq),
 
 		closeReq: make(chan struct{}),
 		closed:   make(chan struct{}),
-	}
-
-	if ms.maxUnflushedTime == 0 {
-		ms.maxUnflushedTime = 60 * time.Second
 	}
 
 	nextSeq, err := nextSequence(ms.streamstore, config.Path)
@@ -92,20 +75,11 @@ func (mq *MessageSink) run(nextSeq int) {
 
 func (mq *MessageSink) loop(nextSeq int) error {
 	writtenCount := 0
-	var t *time.Timer
-	var timerC <-chan time.Time
 
 	var wc io.WriteCloser
 	var err error
 
-	var flushNeeded bool
-
 	for {
-		if t == nil {
-			timerC = nil
-		} else {
-			timerC = t.C
-		}
 		select {
 		case r := <-mq.reqs:
 			var lenBytes [4]byte
@@ -128,14 +102,6 @@ func (mq *MessageSink) loop(nextSeq int) error {
 			}
 			close(r.writtenOk)
 			writtenCount++
-			if writtenCount == mq.maxUnflushedMessages {
-				flushNeeded = true
-			} else if t == nil {
-				t = time.NewTimer(mq.maxUnflushedTime)
-			}
-		case <-timerC:
-			t = nil
-			flushNeeded = true
 		case <-mq.closeReq:
 			if wc != nil {
 				if _, err := wc.Write([]byte{0, 0, 0, 0}); err != nil {
@@ -144,18 +110,19 @@ func (mq *MessageSink) loop(nextSeq int) error {
 				return wc.Close()
 			}
 			return nil
-		}
-		if flushNeeded {
-			if _, err := wc.Write([]byte{0, 0, 0, 0}); err != nil {
-				return err
+		case fr := <-mq.flushReqs:
+			if wc != nil {
+				if _, err := wc.Write([]byte{0, 0, 0, 0}); err != nil {
+					return err
+				}
+				if err := wc.Close(); err != nil {
+					return err
+				}
+				nextSeq++
+				wc = nil
+				writtenCount = 0
 			}
-			if err := wc.Close(); err != nil {
-				return err
-			}
-			nextSeq++
-			wc = nil
-			writtenCount = 0
-			flushNeeded = false
+			close(fr.flushedOk)
 		}
 	}
 }
@@ -171,6 +138,26 @@ func (mq *MessageSink) PutMessage(m []byte) error {
 	case mq.reqs <- req:
 		select {
 		case <-req.writtenOk:
+			return nil
+		case <-mq.closed:
+			return mq.exitErr
+		}
+	case <-mq.closed:
+		return mq.exitErr
+	}
+}
+
+type flushReq struct {
+	flushedOk chan struct{}
+}
+
+func (mq *MessageSink) Flush() error {
+	req := flushReq{make(chan struct{})}
+
+	select {
+	case mq.flushReqs <- req:
+		select {
+		case <-req.flushedOk:
 			return nil
 		case <-mq.closed:
 			return mq.exitErr
