@@ -45,17 +45,18 @@ func NewMessageSource(streamstore straw.StreamStore, config MessageSourceConfig)
 }
 
 func (mq *MessageSource) ConsumeMessages(ctx context.Context, handler ConsumerMessageHandler) error {
+
+	var err error
+	var rc io.ReadCloser
+
+	defer func() {
+		if rc != nil {
+			rc.Close()
+		}
+	}()
+
 	for seq := 0; ; seq++ {
 		fullname := seqToPath(mq.path, seq)
-
-		var rc io.ReadCloser
-		var err error
-
-		defer func() {
-			if rc != nil {
-				rc.Close()
-			}
-		}()
 
 	waitLoop:
 		for {
