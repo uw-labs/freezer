@@ -1,24 +1,19 @@
 package freezer
 
 import (
-	"encoding/binary"
 	"errors"
-	"io"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/uw-labs/straw"
 )
 
 type MessageSinkAutoFlush struct {
-	streamstore straw.StreamStore
-	path        string
-
-	reqs chan *messageReqAf
+	ms *MessageSink
 
 	maxUnflushedTime     time.Duration
 	maxUnflushedMessages int
+
+	reqs chan *messageReqAf
 
 	exitErr  error
 	closeReq chan struct{}
@@ -42,61 +37,44 @@ func NewMessageAutoFlushSink(streamstore straw.StreamStore, config MessageSinkAu
 		config.MaxUnflushedTime = DefaultMaxUnflushedTime
 	}
 
-	_, err := streamstore.Stat(config.Path)
-	if os.IsNotExist(err) {
-		if err := straw.MkdirAll(streamstore, config.Path, 0755); err != nil {
-			return nil, err
-		}
-		_, err = streamstore.Stat(config.Path)
-	}
+	ms, err := NewMessageSink(streamstore, MessageSinkConfig{
+		Path:            config.Path,
+		CompressionType: config.CompressionType,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	switch config.CompressionType {
-	case CompressionTypeNone:
-	case CompressionTypeSnappy:
-		streamstore = newSnappyStreamStore(streamstore)
-	}
-
-	ms := &MessageSinkAutoFlush{
-		streamstore: streamstore,
-		path:        config.Path,
-		reqs:        make(chan *messageReqAf),
+	msa := &MessageSinkAutoFlush{
+		ms: ms,
 
 		maxUnflushedTime:     config.MaxUnflushedTime,
 		maxUnflushedMessages: config.MaxUnflushedMessages,
+
+		reqs: make(chan *messageReqAf),
 
 		closeReq: make(chan struct{}),
 		closed:   make(chan struct{}),
 	}
 
-	if ms.maxUnflushedTime == 0 {
-		ms.maxUnflushedTime = 60 * time.Second
+	if msa.maxUnflushedTime == 0 {
+		msa.maxUnflushedTime = 60 * time.Second
 	}
 
-	nextSeq, err := nextSequence(ms.streamstore, config.Path)
-	if err != nil {
-		return nil, err
-	}
+	go msa.run()
 
-	go ms.run(nextSeq)
-
-	return ms, nil
+	return msa, nil
 }
 
-func (mq *MessageSinkAutoFlush) run(nextSeq int) {
-	mq.exitErr = mq.loop(nextSeq)
+func (mq *MessageSinkAutoFlush) run() {
+	mq.exitErr = mq.loop()
 	close(mq.closed)
 }
 
-func (mq *MessageSinkAutoFlush) loop(nextSeq int) error {
+func (mq *MessageSinkAutoFlush) loop() error {
 	writtenCount := 0
 	var t *time.Timer
 	var timerC <-chan time.Time
-
-	var wc io.WriteCloser
-	var err error
 
 	var flushNeeded bool
 
@@ -108,22 +86,8 @@ func (mq *MessageSinkAutoFlush) loop(nextSeq int) error {
 		}
 		select {
 		case r := <-mq.reqs:
-			var lenBytes [4]byte
-			binary.LittleEndian.PutUint32(lenBytes[:], uint32(len(r.m)))
-			if wc == nil {
-				nextFile := seqToPath(mq.path, nextSeq)
-				if err := straw.MkdirAll(mq.streamstore, filepath.Dir(nextFile), 0755); err != nil {
-					return err
-				}
-				wc, err = mq.streamstore.CreateWriteCloser(nextFile)
-				if err != nil {
-					return err
-				}
-			}
-			if _, err := wc.Write(lenBytes[:]); err != nil {
-				return err
-			}
-			if _, err := wc.Write(r.m); err != nil {
+			err := mq.ms.PutMessage(r.m)
+			if err != nil {
 				return err
 			}
 			close(r.writtenOk)
@@ -137,23 +101,17 @@ func (mq *MessageSinkAutoFlush) loop(nextSeq int) error {
 			t = nil
 			flushNeeded = true
 		case <-mq.closeReq:
-			if wc != nil {
-				if _, err := wc.Write([]byte{0, 0, 0, 0}); err != nil {
+			if writtenCount != 0 {
+				if err := mq.ms.Flush(); err != nil {
 					return err
 				}
-				return wc.Close()
 			}
 			return nil
 		}
 		if flushNeeded {
-			if _, err := wc.Write([]byte{0, 0, 0, 0}); err != nil {
+			if err := mq.ms.Flush(); err != nil {
 				return err
 			}
-			if err := wc.Close(); err != nil {
-				return err
-			}
-			nextSeq++
-			wc = nil
 			writtenCount = 0
 			flushNeeded = false
 		}
