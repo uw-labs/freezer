@@ -14,7 +14,7 @@ func TestSimpleHappyPathRoundTrip(t *testing.T) {
 
 	ss := straw.NewMemStreamStore()
 
-	sink, err := NewMessageSink(ss, MessageSinkConfig{Path: "/foo/bar/baz"})
+	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/bar/baz"})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -14,7 +14,7 @@ func TestSinkCreatesNewDir(t *testing.T) {
 
 	ss := straw.NewMemStreamStore()
 
-	sink, err := NewMessageSink(ss, MessageSinkConfig{Path: "/foo/bar/baz"})
+	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/bar/baz"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func TestMaxUnflushedTime(t *testing.T) {
 
 	ss := straw.NewMemStreamStore()
 
-	sink, err := NewMessageSink(ss, MessageSinkConfig{Path: "/foo/", MaxUnflushedTime: 5 * time.Millisecond})
+	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/", MaxUnflushedTime: 5 * time.Millisecond})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestMaxUnflushedMessages(t *testing.T) {
 
 	ss := straw.NewMemStreamStore()
 
-	sink, err := NewMessageSink(ss, MessageSinkConfig{Path: "/foo/", MaxUnflushedTime: 5 * time.Second, MaxUnflushedMessages: 1})
+	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/", MaxUnflushedTime: 5 * time.Second, MaxUnflushedMessages: 1})
 	if err != nil {
 		t.Fatal(err)
 	}

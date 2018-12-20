@@ -11,11 +11,11 @@ import (
 	"github.com/uw-labs/straw"
 )
 
-type MessageSink struct {
+type MessageSinkAutoFlush struct {
 	streamstore straw.StreamStore
 	path        string
 
-	reqs chan *messageReq
+	reqs chan *messageReqAf
 
 	maxUnflushedTime     time.Duration
 	maxUnflushedMessages int
@@ -25,7 +25,7 @@ type MessageSink struct {
 	closed   chan struct{}
 }
 
-type MessageSinkConfig struct {
+type MessageSinkAutoFlushConfig struct {
 	Path                 string
 	MaxUnflushedTime     time.Duration
 	MaxUnflushedMessages int
@@ -36,7 +36,7 @@ const (
 	DefaultMaxUnflushedTime = time.Second * 10
 )
 
-func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*MessageSink, error) {
+func NewMessageAutoFlushSink(streamstore straw.StreamStore, config MessageSinkAutoFlushConfig) (*MessageSinkAutoFlush, error) {
 
 	if config.MaxUnflushedTime == 0 {
 		config.MaxUnflushedTime = DefaultMaxUnflushedTime
@@ -59,10 +59,10 @@ func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*M
 		streamstore = newSnappyStreamStore(streamstore)
 	}
 
-	ms := &MessageSink{
+	ms := &MessageSinkAutoFlush{
 		streamstore: streamstore,
 		path:        config.Path,
-		reqs:        make(chan *messageReq),
+		reqs:        make(chan *messageReqAf),
 
 		maxUnflushedTime:     config.MaxUnflushedTime,
 		maxUnflushedMessages: config.MaxUnflushedMessages,
@@ -85,12 +85,12 @@ func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*M
 	return ms, nil
 }
 
-func (mq *MessageSink) run(nextSeq int) {
+func (mq *MessageSinkAutoFlush) run(nextSeq int) {
 	mq.exitErr = mq.loop(nextSeq)
 	close(mq.closed)
 }
 
-func (mq *MessageSink) loop(nextSeq int) error {
+func (mq *MessageSinkAutoFlush) loop(nextSeq int) error {
 	writtenCount := 0
 	var t *time.Timer
 	var timerC <-chan time.Time
@@ -160,13 +160,13 @@ func (mq *MessageSink) loop(nextSeq int) error {
 	}
 }
 
-type messageReq struct {
+type messageReqAf struct {
 	m         []byte
 	writtenOk chan struct{}
 }
 
-func (mq *MessageSink) PutMessage(m []byte) error {
-	req := &messageReq{m, make(chan struct{})}
+func (mq *MessageSinkAutoFlush) PutMessage(m []byte) error {
+	req := &messageReqAf{m, make(chan struct{})}
 	select {
 	case mq.reqs <- req:
 		select {
@@ -180,7 +180,7 @@ func (mq *MessageSink) PutMessage(m []byte) error {
 	}
 }
 
-func (mq *MessageSink) Close() error {
+func (mq *MessageSinkAutoFlush) Close() error {
 	select {
 	case mq.closeReq <- struct{}{}:
 		<-mq.closed

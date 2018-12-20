@@ -42,9 +42,9 @@ func (m MyMessage) Marshal() ([]byte, error) {
 
 func produce() {
 
-	sink, err := NewMessageSink(
+	sink, err := NewMessageAutoFlushSink(
 		&straw.OsStreamStore{},
-		MessageSinkConfig{Path: "/tmp/"},
+		MessageSinkAutoFlushConfig{Path: "/tmp/"},
 	)
 	if err != nil {
 		log.Fatal(err)

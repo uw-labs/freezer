@@ -74,7 +74,7 @@ func TestAwaitInputFile(t *testing.T) {
 	}()
 
 	time.Sleep(30 * time.Millisecond)
-	sink, err := NewMessageSink(ss, MessageSinkConfig{Path: "/", MaxUnflushedTime: 5 * time.Millisecond})
+	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/", MaxUnflushedTime: 5 * time.Millisecond})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestSourceContextCancelDuringRead(t *testing.T) {
 
 	ss := straw.NewMemStreamStore()
 
-	sink, err := NewMessageSink(ss, MessageSinkConfig{Path: "/foo/bar/baz"})
+	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/bar/baz"})
 	if err != nil {
 		t.Fatal(err)
 	}
