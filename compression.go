@@ -73,7 +73,7 @@ func (fs *snappyStreamStore) Readdir(name string) ([]os.FileInfo, error) {
 }
 
 type snappyReadCloser struct {
-	sr    io.Reader
+	sr    *snappy.Reader
 	inner io.Closer
 }
 
