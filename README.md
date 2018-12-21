@@ -5,5 +5,5 @@ Freezer is a simple message batch storage and replay interface, intended to prov
 
 Messages are batched, optionally compressed and stored when written, and correspondingly uncompressed and unbatched when read back.
 
-freezer uses straw as a blob storage abstraction. https://godoc.org/github.com/uw-labs/straw
+freezer uses [straw](https://godoc.org/github.com/uw-labs/straw) as a blob storage abstraction.
 
