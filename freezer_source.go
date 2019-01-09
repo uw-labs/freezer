@@ -55,6 +55,8 @@ func (mq *MessageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 		}
 	}()
 
+	lenBytes := []byte{0, 0, 0, 0}
+
 	for seq := 0; ; seq++ {
 		fullname := seqToPath(mq.path, seq)
 
@@ -80,7 +82,6 @@ func (mq *MessageSource) ConsumeMessages(ctx context.Context, handler ConsumerMe
 		}
 	readLoop:
 		for {
-			lenBytes := []byte{0, 0, 0, 0}
 			_, err := io.ReadFull(rc, lenBytes[:])
 			if err != nil {
 				if err == io.EOF {
