@@ -38,7 +38,11 @@ func nextSequence(ss straw.StreamStore, basedir string) (int, error) {
 		if err != nil {
 			return -1, err
 		}
-		fi := fis[len(fis)-1]
+		l := len(fis)
+		if l == 0 {
+			return -1, fmt.Errorf("'%s' does not contain enough folders", basedir)
+		}
+		fi := fis[l-1]
 		if i < dirDepth && !fi.IsDir() {
 			return -1, fmt.Errorf("'%s' is not a directory", fi.Name())
 		}
