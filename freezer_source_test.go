@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -149,6 +148,22 @@ func length(l int) []byte {
 	return lenBytes[:]
 }
 
+type mockStrawReader struct {
+	r *bytes.Reader
+}
+
+func (mr *mockStrawReader) Read(buf []byte) (int, error) {
+	return mr.r.Read(buf)
+}
+
+func (mr *mockStrawReader) ReadAt(buf []byte, offset int64) (int, error) {
+	panic("we don't support or use this in freezer")
+}
+
+func (mr *mockStrawReader) Close() error {
+	return nil
+}
+
 type mockStrawStore struct {
 	d []byte
 }
@@ -158,7 +173,7 @@ func newMockStrawStore(d []byte) mockStrawStore {
 }
 
 func (fs mockStrawStore) OpenReadCloser(name string) (straw.StrawReader, error) {
-	return ioutil.NopCloser(bytes.NewReader(fs.d)), nil
+	return &mockStrawReader{bytes.NewReader(fs.d)}, nil
 }
 
 func (fs mockStrawStore) CreateWriteCloser(name string) (straw.StrawWriter, error) {
