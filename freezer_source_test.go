@@ -59,7 +59,7 @@ func TestConsumeMessagesCorruptDataTest(t *testing.T) {
 func TestAwaitInputFile(t *testing.T) {
 	assert := assert.New(t)
 
-	ss := straw.NewMemStreamStore()
+	ss, _ := straw.Open("mem://")
 
 	source := NewMessageSource(ss, MessageSourceConfig{Path: "/", PollPeriod: 20 * time.Millisecond})
 
@@ -99,7 +99,7 @@ func TestSourceContextCancelDuringRead(t *testing.T) {
 
 	assert := assert.New(t)
 
-	ss := straw.NewMemStreamStore()
+	ss, _ := straw.Open("mem://")
 
 	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/bar/baz"})
 	if err != nil {
@@ -196,5 +196,8 @@ func (fs mockStrawStore) Mkdir(path string, mode os.FileMode) error {
 
 }
 func (fs mockStrawStore) Remove(path string) error {
+	return nil
+}
+func (fs mockStrawStore) Close() error {
 	return nil
 }
