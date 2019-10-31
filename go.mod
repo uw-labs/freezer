@@ -8,7 +8,7 @@ require (
 	github.com/golang/snappy v0.0.1
 	github.com/pkg/sftp v1.10.1 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/uw-labs/straw v0.0.0-20191029143651-5e7fa8010b0a
+	github.com/uw-labs/straw v0.0.0-20191031094804-9da24782a5fe
 	golang.org/x/crypto v0.0.0-20191029031824-8986dd9e96cf // indirect
 	google.golang.org/api v0.13.0 // indirect
 )

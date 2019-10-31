@@ -14,7 +14,11 @@ func main() {
 
 	produce()
 
-	cons := NewMessageSource(&straw.OsStreamStore{}, MessageSourceConfig{Path: "/tmp/"})
+	ss, err := straw.Open("file:///")
+	if err != nil {
+		log.Fatal(err)
+	}
+	cons := NewMessageSource(ss, MessageSourceConfig{Path: "/tmp/"})
 
 	// consume messages for 2 seconds
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -42,8 +46,12 @@ func (m MyMessage) Marshal() ([]byte, error) {
 
 func produce() {
 
+	ss, err := straw.Open("file:///")
+	if err != nil {
+		log.Fatal(err)
+	}
 	sink, err := NewMessageAutoFlushSink(
-		&straw.OsStreamStore{},
+		ss,
 		MessageSinkAutoFlushConfig{Path: "/tmp/"},
 	)
 	if err != nil {

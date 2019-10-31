@@ -12,7 +12,7 @@ import (
 func TestSimpleHappyPathRoundTrip(t *testing.T) {
 	assert := assert.New(t)
 
-	ss := straw.NewMemStreamStore()
+	ss, _ := straw.Open("mem://")
 
 	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/bar/baz"})
 	if err != nil {

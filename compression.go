@@ -72,6 +72,10 @@ func (fs *snappyStreamStore) Readdir(name string) ([]os.FileInfo, error) {
 	return fs.store.Readdir(name)
 }
 
+func (fs *snappyStreamStore) Close() error {
+	return fs.store.Close()
+}
+
 type snappyReadCloser struct {
 	sr    *snappy.Reader
 	inner io.Closer

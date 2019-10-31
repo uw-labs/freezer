@@ -18,7 +18,7 @@ func TestSeqToPath(t *testing.T) {
 func TestFindLatestEmpty(t *testing.T) {
 	assert := assert.New(t)
 
-	ss := straw.NewMemStreamStore()
+	ss, _ := straw.Open("mem://")
 
 	latest, err := nextSequence(ss, "/foo/")
 	assert.NoError(err)
@@ -29,7 +29,7 @@ func TestFindLatestEmpty(t *testing.T) {
 func TestNotADir(t *testing.T) {
 	assert := assert.New(t)
 
-	ss := straw.NewMemStreamStore()
+	ss, _ := straw.Open("mem://")
 
 	err := straw.MkdirAll(ss, seqToPath("/foo/", 0), 0777)
 	assert.NoError(err)
@@ -48,7 +48,7 @@ func TestNotADir(t *testing.T) {
 func TestFindLatest(t *testing.T) {
 	assert := assert.New(t)
 
-	ss := straw.NewMemStreamStore()
+	ss, _ := straw.Open("mem://")
 
 	for i := 0; i < 12345; i++ {
 		path := seqToPath("/foo/", i)

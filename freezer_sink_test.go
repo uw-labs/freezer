@@ -12,7 +12,7 @@ import (
 func TestSinkCreatesNewDir(t *testing.T) {
 	assert := assert.New(t)
 
-	ss := straw.NewMemStreamStore()
+	ss, _ := straw.Open("mem://")
 
 	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/bar/baz"})
 	if err != nil {
@@ -29,7 +29,7 @@ func TestMaxUnflushedTime(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	ss := straw.NewMemStreamStore()
+	ss, _ := straw.Open("mem://")
 
 	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/", MaxUnflushedTime: 5 * time.Millisecond})
 	if err != nil {
@@ -52,7 +52,7 @@ func TestMaxUnflushedMessages(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	ss := straw.NewMemStreamStore()
+	ss, _ := straw.Open("mem://")
 
 	sink, err := NewMessageAutoFlushSink(ss, MessageSinkAutoFlushConfig{Path: "/foo/", MaxUnflushedTime: 5 * time.Second, MaxUnflushedMessages: 1})
 	if err != nil {
