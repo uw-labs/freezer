@@ -1,4 +1,4 @@
 github.com/golang/snappy v0.0.1 h1:Qgr9rKW7uDUkrbSmQeiDsGa8SjGyCOGtuasMWwvp2P4=
 github.com/golang/snappy v0.0.1/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
-github.com/uw-labs/straw v0.0.0-20191031094804-9da24782a5fe h1:/UtKn4XO+zD2fu76QYs+tsHE4FNGgghPWhVRJlfa570=
-github.com/uw-labs/straw v0.0.0-20191031094804-9da24782a5fe/go.mod h1:bVgIBcoAnl11UG58LiS78c/+ocH5s0QXKloPod/ODiQ=
+github.com/uw-labs/straw v0.0.0-20191105111257-9cb8ce096ff1 h1:jxYs6tlb0l/ynzIGFqkXZLoiAQHBCe32B5fePHlt4h8=
+github.com/uw-labs/straw v0.0.0-20191105111257-9cb8ce096ff1/go.mod h1:bVgIBcoAnl11UG58LiS78c/+ocH5s0QXKloPod/ODiQ=
