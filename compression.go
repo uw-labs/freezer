@@ -89,8 +89,12 @@ func (src *snappyReadCloser) Close() error {
 	return src.inner.Close()
 }
 
-func (src *snappyReadCloser) ReadAt(buf []byte, offset int64) (int, error) {
-	panic("we don't support or use this in freezer")
+func (src *snappyReadCloser) Seek(int64, int) (int64, error) {
+	panic("freezer: Seek not supported in snappy read closer")
+}
+
+func (src *snappyReadCloser) ReadAt([]byte, int64) (int, error) {
+	panic("freezer: ReadAt not supported in snappy read closer")
 }
 
 type snappyWriteCloser struct {

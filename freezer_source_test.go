@@ -156,8 +156,12 @@ func (mr *mockStrawReader) Read(buf []byte) (int, error) {
 	return mr.r.Read(buf)
 }
 
-func (mr *mockStrawReader) ReadAt(buf []byte, offset int64) (int, error) {
-	panic("we don't support or use this in freezer")
+func (mr *mockStrawReader) Seek(int64, int) (int64, error) {
+	panic("freezer: Seek not supported in mock read closer")
+}
+
+func (mr *mockStrawReader) ReadAt([]byte, int64) (int, error) {
+	panic("freezer: ReadAt not supported in mock read closer")
 }
 
 func (mr *mockStrawReader) Close() error {
