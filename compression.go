@@ -12,10 +12,15 @@ type CompressionType int
 const (
 	CompressionTypeNone   CompressionType = 0
 	CompressionTypeSnappy CompressionType = 1
+	CompressionTypeZstd   CompressionType = 2
 )
 
 func newSnappyStreamStore(store straw.StreamStore) *snappyStreamStore {
 	return &snappyStreamStore{store}
+}
+
+func newZstdStreamStore(store straw.StreamStore) *zstdStreamStore {
+	return &zstdStreamStore{store}
 }
 
 // noSizeFileInfo wraps another os.FileInfo but will panic if Size() is called.

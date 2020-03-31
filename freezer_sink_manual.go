@@ -45,6 +45,8 @@ func NewMessageSink(streamstore straw.StreamStore, config MessageSinkConfig) (*M
 	case CompressionTypeNone:
 	case CompressionTypeSnappy:
 		streamstore = newSnappyStreamStore(streamstore)
+	case CompressionTypeZstd:
+		streamstore = newZstdStreamStore(streamstore)
 	}
 
 	ms := &MessageSink{
