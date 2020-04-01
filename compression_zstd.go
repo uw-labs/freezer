@@ -61,6 +61,7 @@ func (fs *zstdStreamStore) CreateWriteCloser(name string) (straw.StrawWriter, er
 	}
 	w, err := zstd.NewWriter(wc)
 	if err != nil {
+		_ = wc.Close()
 		return nil, err
 	}
 	return &zstdWriteCloser{w, wc}, nil
