@@ -31,6 +31,8 @@ func NewMessageSource(streamstore straw.StreamStore, config MessageSourceConfig)
 	case CompressionTypeNone:
 	case CompressionTypeSnappy:
 		streamstore = newSnappyStreamStore(streamstore)
+	case CompressionTypeZstd:
+		streamstore = newZstdStreamStore(streamstore)
 	}
 
 	ms := &MessageSource{
