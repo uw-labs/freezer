@@ -85,6 +85,7 @@ func (src *zstdReadCloser) Read(buf []byte) (int, error) {
 }
 
 func (src *zstdReadCloser) Close() error {
+	src.sr.Close()
 	return src.inner.Close()
 }
 
