@@ -134,7 +134,12 @@ type messageReq struct {
 	writtenOk chan struct{}
 }
 
+var errZeroLengthMessage = errors.New("freezer does not support messages of 0 length")
+
 func (mq *MessageSink) PutMessage(m []byte) error {
+	if len(m) == 0 {
+		return errZeroLengthMessage
+	}
 	req := &messageReq{m, make(chan struct{})}
 	select {
 	case mq.reqs <- req:
